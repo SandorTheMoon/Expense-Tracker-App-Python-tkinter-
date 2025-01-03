@@ -1,7 +1,3 @@
-#Corpuz, Mark Jhay
-#Deang, April Joy
-#Espero, Airysh Xander
-
 import customtkinter
 import tkinter as tk
 from tkinter import ttk
@@ -10,6 +6,7 @@ from openpyxl import load_workbook
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from tkinter.ttk import Style
 
 #Setting up main window
 root = customtkinter.CTk()
@@ -88,37 +85,66 @@ class FinanceTracker():
         else:
             # Initializing Mainmenu in lower frame
             self.Mainmenu()
-        
-    # Class method for Pie Chart
+
+    # Method for creating the Pie Chart
     def Graph(self):
-        
         try:
-            # Opening excel file
+            # Opening Excel file
             wb = load_workbook("Expenses.xlsx")
             ws = wb["Sheet3"]
             ws2 = wb["Sheet3"]
 
-            # Getting the index values and storing it in TotalEpenses and TotalProfits
+            # Getting the index values and storing them in TotalExpenses and TotalBalance
             TotalExpenses = int(ws["B2"].value)
             TotalBalance = int(ws2["A2"].value)
-            wb.save("Expenses.xlsx") # Saving excel file
+            wb.save("Expenses.xlsx")  # Saving Excel file
 
-            # Setting figure size and pie size of the Pie Chart
-            self.fig = plt.figure(figsize=(5,5), dpi=100)
-            self.fig.set_size_inches(3.7, 2.7)
-            self.fig.set_facecolor('#3C6255') # Setting its background color to match with its background frame
+            # Setting up the figure for the Pie Chart
+            self.fig = plt.figure(figsize=(6, 4), dpi=100)
+            self.fig.set_facecolor('#3C6255')  # Background color to match the frame
 
-            PieChart = [TotalExpenses, TotalBalance] # Storing values
-            PieLabel = ["Total Expenses", "Total Budget"] # Storing labels
-            
-            plt.axis("equal") # Setting a flat circle
-            plt.pie(PieChart, labels=PieLabel, radius=0.7, autopct="%.1f%%", shadow=True, explode=[0, 0.1]) # Setting Pie Chart with its values, labels, radius, decimal count, shadow, and slice spaceing
+            # Pie Chart data and labels
+            PieChart = [TotalExpenses, TotalBalance]
+            PieLabel = ["Total Expenses", "Total Budget"]
 
-            # Setting canvas for Pie Chart 
+            # Enhanced color palette
+            colors = ['#FF6F61', '#6CA0DC']
+
+            # Configuring the Pie Chart
+            wedges, texts, autotexts = plt.pie(
+                PieChart,
+                radius=0.7,
+                autopct="%.1f%%",
+                shadow=True,
+                explode=[0, 0.1],
+                colors=colors,
+                startangle=140
+            )
+
+            # Adding a legend to display labels outside the pie chart
+            plt.legend(
+                wedges, 
+                PieLabel, 
+                loc="lower left", 
+                bbox_to_anchor=(0.8, 0.3), 
+                fontsize=10, 
+                frameon=False
+            )
+
+            # Customizing percentage labels
+            for autotext in autotexts:
+                autotext.set_color('white')
+                autotext.set_fontsize(15)
+                autotext.set_fontweight('bold')
+
+            # Adjusting layout for better spacing
+            self.fig.tight_layout(rect=[0, 0, 0.9, 1])  # Adjusted space for the legend
+
+            # Embedding the Pie Chart in the Tkinter GUI
             self.canvasbar = FigureCanvasTkAgg(self.fig, self.UpperFrame)
-            self.canvasbar.draw() # Drawing the canvas
-            self.canvasbar.get_tk_widget().pack(anchor=tk.CENTER) # Placing the Pie Chart and Canvas
-        
+            self.canvasbar.draw()  # Drawing the canvas
+            self.canvasbar.get_tk_widget().pack(anchor=tk.CENTER)  # Placing the Pie Chart and Canvas
+
         except RuntimeError:
             pass
 
@@ -128,41 +154,57 @@ class FinanceTracker():
         
         # Button widget
         self.button1 = tk.Button(self.LowerFrame, text="+ Add Expense", font=("Arial Black", 8), fg="white", bg="#61876E", command=self.AddExpense, activebackground="#0081C9")
-        self.button1.grid(column=0, row=0, padx=15, pady=10), 
+        self.button1.grid(column=0, row=1, padx=15, pady=10)
 
         # Button widget
         self.button2 = tk.Button(self.LowerFrame, text="+ Add Balance", font=("Arial Black", 8), fg="white", bg="#61876E", command=self.AddProfit, activebackground="#0081C9")
-        self.button2.grid(column=1, row=0, padx=15, pady=10)
+        self.button2.grid(column=1, row=1, padx=15, pady=10)
 
         # Button widget
         self.button3 = tk.Button(self.LowerFrame, text="Check History", font=("Arial Black", 8), fg="white", bg="#61876E", command=self.CheckHistory, activebackground="#0081C9")
-        self.button3.grid(column=2, row=0, padx=15, pady=10)
+        self.button3.grid(column=2, row=1, padx=15, pady=10)
 
         # Label widget
-        self.label1 = tk.Label(self.LowerFrame, text="RECENT EXPENSES:", font=("Arial Black", 12), fg="white", bg="#61876E")
-        self.label1.grid(columnspan=3, row=1, pady=(40,2), ipadx=100)
+        self.label1 = tk.Label(self.LowerFrame, text="RECENT EXPENSES:", font=("Arial Black", 12), fg="white", bg="#3C6255")
+        self.label1.grid(columnspan=3, row=2, pady=(20, 10), ipadx=100)
 
-        # To read and store the whole index table
-        df = pd.read_excel('Expenses.xlsx')
+        # Create style for the Treeview
+        style = Style()
+        style.configure("Treeview", background="#A6BB8D", foreground="black", fieldbackground="#A6BB8D", rowheight=25)
+        style.map("Treeview", background=[("selected", "#3C6255")])
 
-        # To place the stored index table but only limited to the last 3 rows
-        self.label4 = tk.Label(self.LowerFrame, text=df.tail(3), font=('Arial', 7), fg="black", bg="#A6BB8D")
-        self.label4.grid(columnspan=3, row=2, pady=(0,15), ipadx=30)
-        
+        # Treeview widget for recent expenses
+        columns = ("Type", "Name", "Cost", "Date")
+        self.tree = ttk.Treeview(self.LowerFrame, columns=columns, show="headings", height=3)
+        self.tree.grid(columnspan=3, row=3, pady=(0, 15), padx=10)
+
+        # Define headings
+        for col in columns:
+            self.tree.heading(col, text=col, anchor=tk.W)
+            self.tree.column(col, width=80, anchor=tk.W)
+
+        # Fetch the last 3 rows from the Excel file
+        df = pd.read_excel("Expenses.xlsx")
+        recent_expenses = df.tail(3).values.tolist()
+
+        # Insert data into the Treeview
+        for row in recent_expenses:
+            self.tree.insert("", "end", values=row)
+
         # Opening the excel file
         wb = load_workbook("Expenses.xlsx")
-        ws = wb["Sheet3"] # Setting sheet 3 as the active sheet
-        NewBalance = int(ws["A2"].value) # Storing the index value
-        
-        # Label widget
+        ws = wb["Sheet3"]
+        NewBalance = int(ws["A2"].value)
+
+        # Remaining Balance Label
         self.label2 = tk.Label(self.LowerFrame, text="REMAINING BALANCE: ", font=("Arial Black", 12), fg="white", bg="#3C6255")
-        self.label2.grid(columnspan=2, row=3, pady=(25,15), ipadx=20)
+        self.label2.grid(columnspan=2, row=4, pady=(10, 15), ipadx=20)
 
-        # Label widget for printing the user balance
+        # Display remaining balance
         self.label3 = tk.Label(self.LowerFrame, text=NewBalance, font=("Arial Black", 12), fg="white", bg="#3C6255")
-        self.label3.grid(column=2, row=3, pady=(25,15), ipadx=25)
+        self.label3.grid(column=2, row=4, pady=(10, 15), ipadx=25)
 
-        # Initializing pie chart
+        # Initialize pie chart
         self.Graph()
 
     
