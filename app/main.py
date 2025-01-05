@@ -592,7 +592,7 @@ class FinanceTracker():
         self.label3.destroy()
 
         # Label widget
-        self.label4 = tk.Label(self.LowerFrame, text="EXPENSES HISTORY:", font=("Arial Black", 12), fg="white", bg="#61876E")
+        self.label4 = tk.Label(self.LowerFrame, text="EXPENSES HISTORY:", font=("Arial Black", 12), fg="white", bg="#3C6255")
         self.label4.grid(columnspan=3, row=1, pady=(40,2), ipadx=100)
 
         # To read and store the existing values from the table
